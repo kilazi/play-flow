@@ -1,0 +1,16 @@
+<div class="quest-scroll">
+  <h2>Active Quests</h2>
+  <div class="quest-list">
+    <div *ngFor="let quest of quests" class="quest-item" [class.completed]="quest.completed">
+      <div class="quest-content">
+        <h3>{{ quest.name }}</h3>
+        <p>{{ quest.description }}</p>
+        <div class="quest-xp">XP: {{ quest.experience }}</div>
+        <div class="quest-actions">
+          <button *ngIf="!quest.completed" (click)="completeQuest(quest)" class="wow-button">Complete</button>
+          <button (click)="deleteQuest(quest.id)" class="wow-button delete">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 
