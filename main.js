@@ -6,12 +6,14 @@ let mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 391,
+    height: 520,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
-    }
+    },
+    // Optional: prevent window resizing
+    resizable: false
   });
 
   const startUrl = url.format({

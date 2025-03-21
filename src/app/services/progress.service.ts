@@ -1,71 +1,86 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { UserProgress } from '../models/user-progress.model';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { AudioService } from './audio.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProgressService {
-  private PROGRESS_STORAGE_KEY = 'wow-user-progress';
-  private userProgress: UserProgress = {
-    level: 1,
-    currentExp: 0,
-    expToNextLevel: 100
-  };
-  private progressSubject = new BehaviorSubject<UserProgress>(this.userProgress);
-  private levelSound: HTMLAudioElement;
-  private questCompleteSound: HTMLAudioElement;
+  private currentExp = 0;
+  private currentLevel = 1;
+  private expToNextLevel = 100; // Base exp needed for level 2
+  
+  private expSubject = new BehaviorSubject<number>(0);
+  public exp$ = this.expSubject.asObservable();
+  
+  private levelSubject = new BehaviorSubject<number>(1);
+  public level$ = this.levelSubject.asObservable();
+  
+  private levelUpSubject = new Subject<number>();
+  public levelUp$ = this.levelUpSubject.asObservable();
 
-  constructor() {
-    this.loadProgress();
-    this.levelSound = new Audio('assets/sounds/level-up.mp3');
-    this.questCompleteSound = new Audio('assets/sounds/quest-complete.mp3');
-  }
+  constructor(private audioService: AudioService) {}
 
-  getUserProgress(): Observable<UserProgress> {
-    return this.progressSubject.asObservable();
-  }
-
-  addExperience(exp: number): boolean {
-    let leveledUp = false;
-    this.userProgress.currentExp += exp;
-
-    // Check if user leveled up
-    while (this.userProgress.currentExp >= this.userProgress.expToNextLevel) {
-      this.userProgress.currentExp -= this.userProgress.expToNextLevel;
-      this.userProgress.level++;
-      this.userProgress.expToNextLevel = this.calculateExpForNextLevel(this.userProgress.level);
-      leveledUp = true;
-      this.playLevelUpSound();
+  /**
+   * Add experience points and check for level up
+   */
+  addExp(exp: number): void {
+    this.currentExp += exp;
+    this.expSubject.next(this.currentExp);
+    
+    // Check if level up occurred
+    const wasLevelUp = this.checkLevelUp();
+    
+    // Play appropriate sound
+    if (wasLevelUp) {
+      // Play level up sound exclusively
+      this.audioService.playLevelUpSound();
+    } else if (exp > 0) {
+      // Only play quest complete sound if exp was gained but no level up
+      this.audioService.playQuestCompleteSound();
     }
+  }
 
-    this.saveProgress();
-    this.progressSubject.next({ ...this.userProgress });
+  /**
+   * Check if player leveled up and update level if needed
+   * @returns true if level up occurred
+   */
+  private checkLevelUp(): boolean {
+    let leveledUp = false;
+    
+    while (this.currentExp >= this.expToNextLevel) {
+      this.currentExp -= this.expToNextLevel;
+      this.currentLevel++;
+      this.levelSubject.next(this.currentLevel);
+      this.levelUpSubject.next(this.currentLevel);
+      
+      // Update exp needed for next level (increase by 50% each level)
+      this.expToNextLevel = Math.floor(this.expToNextLevel * 1.5);
+      
+      leveledUp = true;
+    }
+    
     return leveledUp;
   }
 
-  playQuestCompleteSound(): void {
-    this.questCompleteSound.play();
+  /**
+   * Get current exp progress as percentage toward next level
+   */
+  getExpPercentage(): number {
+    return (this.currentExp / this.expToNextLevel) * 100;
   }
 
-  private playLevelUpSound(): void {
-    this.levelSound.play();
+  /**
+   * Get current exp
+   */
+  getCurrentExp(): number {
+    return this.currentExp;
   }
 
-  private calculateExpForNextLevel(level: number): number {
-    // Simple formula: each level requires 10% more XP than the previous one
-    return Math.floor(100 * Math.pow(1.1, level - 1));
-  }
-
-  private loadProgress(): void {
-    const storedProgress = localStorage.getItem(this.PROGRESS_STORAGE_KEY);
-    if (storedProgress) {
-      this.userProgress = JSON.parse(storedProgress);
-      this.progressSubject.next({ ...this.userProgress });
-    }
-  }
-
-  private saveProgress(): void {
-    localStorage.setItem(this.PROGRESS_STORAGE_KEY, JSON.stringify(this.userProgress));
+  /**
+   * Get exp needed for next level
+   */
+  getExpToNextLevel(): number {
+    return this.expToNextLevel;
   }
 } 

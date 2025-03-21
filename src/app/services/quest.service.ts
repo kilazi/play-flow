@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Quest } from '../models/quest.model';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -7,11 +8,11 @@ import { v4 as uuidv4 } from 'uuid';
   providedIn: 'root'
 })
 export class QuestService {
-  private QUESTS_STORAGE_KEY = 'wow-quests';
   private quests: Quest[] = [];
   private questsSubject = new BehaviorSubject<Quest[]>([]);
 
   constructor() {
+    // Load quests from localStorage or initialize with empty array
     this.loadQuests();
   }
 
@@ -19,57 +20,46 @@ export class QuestService {
     return this.questsSubject.asObservable();
   }
 
-  addQuest(quest: Omit<Quest, 'id' | 'completed' | 'createdAt'>): Quest {
+  addQuest(quest: Omit<Quest, 'id' | 'completed'>): void {
     const newQuest: Quest = {
       id: uuidv4(),
-      name: quest.name,
-      description: quest.description,
-      experience: quest.experience,
-      completed: false,
-      createdAt: new Date()
+      ...quest,
+      completed: false
     };
-
+    
     this.quests.push(newQuest);
     this.saveQuests();
     this.questsSubject.next([...this.quests]);
-    return newQuest;
   }
 
-  updateQuest(updatedQuest: Quest): void {
-    const index = this.quests.findIndex(quest => quest.id === updatedQuest.id);
-    if (index !== -1) {
-      this.quests[index] = updatedQuest;
-      this.saveQuests();
-      this.questsSubject.next([...this.quests]);
-    }
-  }
-
-  completeQuest(questId: string): Quest | null {
-    const quest = this.quests.find(q => q.id === questId);
+  completeQuest(id: string): Quest | undefined {
+    const quest = this.quests.find(q => q.id === id);
+    
     if (quest && !quest.completed) {
       quest.completed = true;
       this.saveQuests();
       this.questsSubject.next([...this.quests]);
       return quest;
     }
-    return null;
+    
+    return undefined;
   }
 
-  deleteQuest(questId: string): void {
-    this.quests = this.quests.filter(quest => quest.id !== questId);
+  deleteQuest(id: string): void {
+    this.quests = this.quests.filter(q => q.id !== id);
     this.saveQuests();
     this.questsSubject.next([...this.quests]);
   }
 
+  private saveQuests(): void {
+    localStorage.setItem('wow-quests', JSON.stringify(this.quests));
+  }
+
   private loadQuests(): void {
-    const storedQuests = localStorage.getItem(this.QUESTS_STORAGE_KEY);
+    const storedQuests = localStorage.getItem('wow-quests');
     if (storedQuests) {
       this.quests = JSON.parse(storedQuests);
       this.questsSubject.next([...this.quests]);
     }
-  }
-
-  private saveQuests(): void {
-    localStorage.setItem(this.QUESTS_STORAGE_KEY, JSON.stringify(this.quests));
   }
 } 

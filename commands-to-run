@@ -1,0 +1,3 @@
+mkdir -p src/assets/sounds
+touch src/assets/sounds/quest-complete.mp3
+touch src/assets/sounds/level-up.mp3 

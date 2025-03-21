@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { Quest } from '../../models/quest.model';
 import { QuestService } from '../../services/quest.service';
 import { ProgressService } from '../../services/progress.service';
@@ -8,8 +9,9 @@ import { ProgressService } from '../../services/progress.service';
   templateUrl: './quest-list.component.html',
   styleUrls: ['./quest-list.component.scss']
 })
-export class QuestListComponent implements OnInit {
+export class QuestListComponent implements OnInit, OnDestroy {
   quests: Quest[] = [];
+  private subscription = new Subscription();
   
   constructor(
     private questService: QuestService,
@@ -17,25 +19,26 @@ export class QuestListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.questService.getQuests().subscribe(quests => {
-      this.quests = quests;
-    });
+    this.subscription.add(
+      this.questService.getQuests().subscribe(quests => {
+        this.quests = quests;
+      })
+    );
   }
 
-  completeQuest(quest: Quest): void {
-    if (!quest.completed) {
-      const completedQuest = this.questService.completeQuest(quest.id);
-      if (completedQuest) {
-        this.progressService.playQuestCompleteSound();
-        const leveledUp = this.progressService.addExperience(completedQuest.experience);
-        if (leveledUp) {
-          // Could trigger level up animation here
-        }
-      }
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
+  }
+
+  completeQuest(id: string): void {
+    const completedQuest = this.questService.completeQuest(id);
+    
+    if (completedQuest) {
+      this.progressService.addExp(completedQuest.experience);
     }
   }
 
-  deleteQuest(questId: string): void {
-    this.questService.deleteQuest(questId);
+  deleteQuest(id: string): void {
+    this.questService.deleteQuest(id);
   }
 } 

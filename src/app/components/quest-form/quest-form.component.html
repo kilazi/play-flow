@@ -1,32 +1,44 @@
 <div class="quest-form-container">
-  <h2>{{ isEditing ? 'Edit Quest' : 'Add New Quest' }}</h2>
+  <h3>Add New Quest</h3>
   <form [formGroup]="questForm" (ngSubmit)="onSubmit()">
     <div class="form-group">
-      <label for="name">Quest Name</label>
-      <input type="text" id="name" formControlName="name" class="wow-input">
-      <div *ngIf="questForm.get('name')?.invalid && questForm.get('name')?.touched" class="error">
-        Quest name is required
+      <label for="title">Quest Title</label>
+      <input 
+        type="text" 
+        id="title" 
+        formControlName="title" 
+        placeholder="Enter quest title"
+        class="wow-input"
+      >
+      <div *ngIf="questForm.get('title')?.invalid && questForm.get('title')?.touched" class="error">
+        Quest title is required
       </div>
     </div>
-
+    
     <div class="form-group">
-      <label for="description">Description</label>
-      <textarea id="description" formControlName="description" class="wow-input"></textarea>
-      <div *ngIf="questForm.get('description')?.invalid && questForm.get('description')?.touched" class="error">
-        Description is required
-      </div>
+      <label for="description">Description (Optional)</label>
+      <textarea 
+        id="description" 
+        formControlName="description" 
+        placeholder="Enter quest description"
+        class="wow-input"
+      ></textarea>
     </div>
-
+    
     <div class="form-group">
       <label for="experience">Experience Points</label>
-      <input type="number" id="experience" formControlName="experience" class="wow-input">
+      <input 
+        type="number" 
+        id="experience" 
+        formControlName="experience" 
+        min="1"
+        class="wow-input"
+      >
       <div *ngIf="questForm.get('experience')?.invalid && questForm.get('experience')?.touched" class="error">
         Experience must be at least 1
       </div>
     </div>
-
-    <button type="submit" [disabled]="questForm.invalid" class="wow-button">
-      {{ isEditing ? 'Update Quest' : 'Add Quest' }}
-    </button>
+    
+    <button type="submit" [disabled]="!questForm.valid" class="wow-button">Add Quest</button>
   </form>
 </div> 

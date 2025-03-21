@@ -1,7 +1,9 @@
 <div class="exp-container">
-  <div class="level-indicator">Level {{ userProgress.level }}</div>
+  <div class="level-indicator">Level {{ currentLevel }}</div>
   <div class="exp-bar-container">
-    <div class="exp-bar" [style.width.%]="expPercentage"></div>
-    <div class="exp-text">{{ userProgress.currentExp }} / {{ userProgress.expToNextLevel }} XP</div>
+    <div class="exp-bar">
+      <div class="exp-fill" [style.width.%]="expPercentage"></div>
+      <div class="exp-text">{{ currentExp }} / {{ expToNextLevel }} XP</div>
+    </div>
   </div>
 </div> 
